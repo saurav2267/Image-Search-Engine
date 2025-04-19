@@ -1,12 +1,22 @@
-# app.py
+# Import necessary libraries
+import nltk
+import os
 import pickle
 from flask import Flask, render_template, request
 from ranking_models import rank_vsm, rank_bm25, rank_language_model
 # NOTE: preprocessing.py is implicitly used by ranking_models, ensure it's present
 
+# --- Ensure 'punkt' is downloaded ---
+nltk_data_path = '/home/yourusername/nltk_data'  # Replace with your actual PythonAnywhere username
+if not os.path.exists(nltk_data_path):
+    os.makedirs(nltk_data_path, exist_ok=True)
+
+nltk.download('punkt', download_dir=nltk_data_path)  # Downloads the 'punkt' tokenizer
+nltk.data.path.append(nltk_data_path)  # Tells NLTK to look in the right folder for data
+
 # --- Configuration ---
 INDEX_FILE = 'search_index.pkl'
-RESULTS_PER_PAGE = 20 # Number of images to show
+RESULTS_PER_PAGE = 20  # Number of images to show
 
 # --- Initialize Flask App ---
 app = Flask(__name__)
@@ -23,7 +33,7 @@ try:
     df = index_data['df']
     term_counts = index_data['term_counts']
     total_tokens = index_data['total_tokens']
-    doc_id_to_data = index_data['doc_id_to_data'] # Load the mapping
+    doc_id_to_data = index_data['doc_id_to_data']  # Load the mapping
     print(f"Index loaded successfully. {N} documents.")
 except FileNotFoundError:
     print(f"FATAL ERROR: Index file '{INDEX_FILE}' not found.")
@@ -45,14 +55,14 @@ def home():
 def search_results():
     """Handles the search query and displays results on the same template."""
     query = request.args.get('query', '')
-    model_choice = request.args.get('model', 'bm25') # Default to BM25
+    model_choice = request.args.get('model', 'bm25')  # Default to BM25
 
     results_for_template = []
     error_message = None
 
     if not query:
         # If query is empty, just render the template without results (like home)
-         return render_template('search.html', query=query, results=[], model=model_choice, error=None)
+        return render_template('search.html', query=query, results=[], model=model_choice, error=None)
 
     print(f"Received query: '{query}' using model: {model_choice}")
 
@@ -61,11 +71,11 @@ def search_results():
         if model_choice == 'vsm':
             ranked_docs = rank_vsm(query, inverted_index, df, N, doc_lengths)
         elif model_choice == 'lm':
-             # Ensure necessary components for LM are loaded
+            # Ensure necessary components for LM are loaded
             if term_counts is None or total_tokens is None:
-                 raise ValueError("Language Model components not found in index file.")
+                raise ValueError("Language Model components not found in index file.")
             ranked_docs = rank_language_model(query, inverted_index, df, doc_lengths, term_counts, total_tokens)
-        else: # Default to BM25
+        else:  # Default to BM25
             ranked_docs = rank_bm25(query, inverted_index, df, N, doc_lengths)
 
         # Prepare results for display (only if ranking was successful)
@@ -75,18 +85,16 @@ def search_results():
                 results_for_template.append({
                     'doc_id': doc_id,
                     'score': round(score, 4),
-                    'image_url': image_info.get('image_url', '#'), # Provide default if missing
+                    'image_url': image_info.get('image_url', '#'),  # Provide default if missing
                     'page_url': image_info.get('page_url', '#'),
                     'text_surrogate': image_info.get('text_surrogate', 'No text available')
                 })
             else:
                 print(f"Warning: doc_id {doc_id} from ranking not found in doc_id_to_data mapping.")
 
-
     except Exception as e:
         print(f"Error during ranking: {e}")
-        error_message = f"Search failed: {e}" # Store the error message
-
+        error_message = f"Search failed: {e}"  # Store the error message
 
     # Render the SAME template, passing the query, results, model, and any error
     return render_template('search.html',
@@ -94,7 +102,6 @@ def search_results():
                            results=results_for_template,
                            model=model_choice,
                            error=error_message)
-
 
 # --- Run the App ---
 if __name__ == '__main__':
