@@ -7,7 +7,7 @@ from ranking_models import rank_vsm, rank_bm25, rank_language_model
 # NOTE: preprocessing.py is implicitly used by ranking_models, ensure it's present
 
 # --- Ensure 'punkt' is downloaded ---
-nltk_data_path = '/home/yourusername/nltk_data'  # Replace with your actual PythonAnywhere username
+nltk_data_path = '/home/saurav2267/nltk_data'  # Replace with your actual PythonAnywhere username
 if not os.path.exists(nltk_data_path):
     os.makedirs(nltk_data_path, exist_ok=True)
 
