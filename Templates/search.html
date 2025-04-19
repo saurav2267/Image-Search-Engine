@@ -1,0 +1,274 @@
+<!-- templates/search.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Dynamically set the title based on whether it's the initial page or results page -->
+    <title>{% if query %}Magical Results for "{{ query }}"{% else %}Wizarding World Image Search{% endif %}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Henny+Penny&family=Crimson+Text:wght@400;600&display=swap');
+        
+        body { 
+            font-family: 'Crimson Text', serif;
+            margin: 0;
+            padding: 0;
+            background-color: #0e1a40; /* Dark blue like the night sky */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='0.5' fill='%23ffffff' opacity='0.3'/%3E%3C/svg%3E");
+            color: #d3a625; /* Gold text */
+        }
+        
+        .search-container { 
+            max-width: 900px; 
+            margin: 2em auto;
+            text-align: center;
+            background-color: rgba(10, 10, 30, 0.8);
+            padding: 2em;
+            border-radius: 10px;
+            box-shadow: 0 0 20px #7e6b33, 0 0 40px rgba(211, 166, 37, 0.2);
+        }
+        
+        h1, h2 {
+            font-family: 'Henny Penny', cursive;
+            color: #d3a625; /* Gold */
+            text-shadow: 2px 2px 4px #000;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 0.5em;
+        }
+        
+        h1::before, h1::after {
+            content: "⚡";
+            margin: 0 10px;
+        }
+        
+        .search-bar { 
+            margin-bottom: 2em;
+            background: rgba(60, 45, 30, 0.7);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #7e6b33;
+        }
+        
+        .search-bar input[type="text"] { 
+            width: 60%; 
+            padding: 12px; 
+            margin-right: 5px;
+            border: 2px solid #7e6b33;
+            border-radius: 5px;
+            background-color: #f9f3e3;
+            font-family: 'Crimson Text', serif;
+            font-size: 1em;
+        }
+        
+        .search-bar select { 
+            padding: 12px; 
+            margin-right: 5px;
+            border: 2px solid #7e6b33;
+            border-radius: 5px;
+            background-color: #f9f3e3;
+            font-family: 'Crimson Text', serif;
+            cursor: pointer;
+        }
+        
+        .search-bar input[type="submit"] { 
+            padding: 12px 20px; 
+            cursor: pointer;
+            background: #7e0001; /* Gryffindor red */
+            color: #f9f3e3;
+            border: none;
+            border-radius: 5px;
+            font-family: 'Crimson Text', serif;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .search-bar input[type="submit"]:hover {
+            background: #d3a625; /* Gold */
+            color: #0e1a40;
+            box-shadow: 0 0 10px #d3a625;
+        }
+        
+        .results-container { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 20px; 
+            justify-content: center;
+            margin-top: 2em;
+        }
+        
+        .result-item { 
+            border: 2px solid #7e6b33; 
+            padding: 15px; 
+            width: 220px; 
+            text-align: center; 
+            background-color: rgba(30, 30, 50, 0.7);
+            border-radius: 8px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .result-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(211, 166, 37, 0.5);
+        }
+        
+        .result-item img { 
+            max-width: 100%; 
+            height: 160px; 
+            object-fit: contain; 
+            display: block; 
+            margin: 0 auto 10px auto;
+            border: 1px solid #7e6b33;
+            border-radius: 5px;
+        }
+        
+        .result-item p { 
+            font-size: 0.9em; 
+            color: #f9f3e3; 
+            margin: 5px 0 0 0; 
+            overflow-wrap: break-word;
+        } 
+        
+        .result-item a { 
+            text-decoration: none; 
+        }
+        
+        .result-item .score { 
+            font-weight: bold; 
+            color: #d3a625; /* Gold */
+        }
+        
+        .no-results { 
+            color: #f9f3e3; 
+            font-style: italic; 
+            margin-top: 2em;
+            font-size: 1.2em;
+        }
+        
+        .error { 
+            color: #ff4444; 
+            font-weight: bold; 
+            margin-top: 1em;
+            background: rgba(60, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        
+        a.new-search {
+            display: inline-block;
+            margin-left: 10px;
+            color: #d3a625;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 5px 10px;
+            border: 1px solid #7e6b33;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        a.new-search:hover {
+            background: #d3a625;
+            color: #0e1a40;
+        }
+        
+        hr {
+            border: 0;
+            height: 1px;
+            background-image: linear-gradient(to right, rgba(211, 166, 37, 0), rgba(211, 166, 37, 0.75), rgba(211, 166, 37, 0));
+            margin: 2em 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="search-container">
+        <!-- Show the main title only on the initial page -->
+        {% if not query %}
+            <h1>Wizarding World Image Search</h1>
+            <p>Find magical images from the world of Harry Potter</p>
+        {% endif %}
+
+        <!-- Search Bar - Always visible -->
+        <div class="search-bar">
+            <form action="/search" method="get">
+                <input type="text" name="query" value="{{ query or '' }}" placeholder="Cast your search spell..." required>
+                <select name="model">
+                    <!-- Set the selected model based on the 'model' variable passed from Flask -->
+                    <option value="bm25" {% if model == 'bm25' %}selected{% endif %}>Sorting Hat (BM25)</option>
+                    <option value="vsm" {% if model == 'vsm' %}selected{% endif %}>Pensieve (TF-IDF)</option>
+                    <option value="lm" {% if model == 'lm' %}selected{% endif %}>Marauder's Map (LM)</option>
+                </select>
+                <input type="submit" value="Accio Images!">
+                <!-- Optionally add a link back to clear search -->
+                {% if query %}
+                    <a href="/" class="new-search">Finite Incantatem</a>
+                {% endif %}
+            </form>
+        </div>
+
+        <!-- Results Section - Only shown if a query was made -->
+        {% if query %}
+            <hr>
+            <h2>Magical Findings for "{{ query }}"</h2>
+            <p>Using the {{ model.upper() }} enchantment</p>
+
+            {% if error %}
+                <p class="error"><i class="fas fa-exclamation-triangle"></i> Oh no! A magical mishap occurred: {{ error }}</p>
+            {% endif %}
+
+            <!-- Check if there are results to display -->
+            {% if results %}
+                <div class="results-container">
+                    {% for result in results %}
+                        <div class="result-item">
+                            <a href="{{ result.page_url }}" target="_blank" title="View full enchantment: {{ result.page_url }}">
+                                <img src="{{ result.image_url }}" alt="Magical item #{{ result.doc_id }}" loading="lazy" onerror="this.parentElement.innerHTML += '<p style=\'color:#ff4444;font-size:0.8em;\'>Image vanished!</p>'; this.style.display='none';">
+                            </a>
+                            <p>Magic Level: <span class="score">{{ result.score }}</span></p>
+                            <p title="{{ result.text_surrogate }}">{{ result.text_surrogate[:80] }}{% if result.text_surrogate|length > 80 %}...{% endif %}</p>
+                            <p><small>Spell Registry #{{ result.doc_id }}</small></p>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <!-- Only show 'no results' if there wasn't an error during the query execution -->
+                {% if not error %}
+                    <p class="no-results"><i class="fas fa-wand-magic"></i> Even the most powerful locator spells found nothing. Try different magical words.</p>
+                {% endif %}
+            {% endif %}
+        {% endif %} {# End of results section #}
+
+    </div> {# End Search Container #}
+    
+    <script>
+        // Add a subtle twinkling star effect to the background
+        document.addEventListener('DOMContentLoaded', function() {
+            function createStar() {
+                const star = document.createElement('div');
+                star.style.position = 'fixed';
+                star.style.width = '2px';
+                star.style.height = '2px';
+                star.style.backgroundColor = 'white';
+                star.style.borderRadius = '50%';
+                star.style.opacity = Math.random() * 0.5 + 0.1;
+                star.style.left = Math.random() * window.innerWidth + 'px';
+                star.style.top = Math.random() * window.innerHeight + 'px';
+                star.style.zIndex = '-1';
+                document.body.appendChild(star);
+                
+                // Twinkle animation
+                setInterval(() => {
+                    star.style.opacity = Math.random() * 0.5 + 0.1;
+                }, Math.random() * 5000 + 1000);
+            }
+            
+            // Create a starry background
+            for (let i = 0; i < 100; i++) {
+                createStar();
+            }
+        });
+    </script>
+</body>
+</html>
